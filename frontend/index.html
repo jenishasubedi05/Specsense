@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Spec Analyzer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0E1F33;
+    --paper: #F5F2EA;
+    --blueprint: #2B5F8C;
+    --graphite: #2C3238;
+    --muted: #6B7280;
+    --amber: #C97A2E;
+    --amber-bg: #FBE9D6;
+    --red: #B3492F;
+    --red-bg: #F6E2DC;
+    --green: #3E7A52;
+    --green-bg: #E1EEE3;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--graphite); font-family: 'IBM Plex Sans', sans-serif; font-size: 15px; line-height: 1.55; }
+  h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; color: var(--ink); margin: 0; }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+  header { background: var(--ink); color: var(--paper); padding: 48px 32px 40px; border-bottom: 3px solid var(--blueprint); }
+  header .inner { max-width: 1100px; margin: 0 auto; }
+  header .kicker { color: #8fb4d6; font-size: 13px; margin-bottom: 10px; }
+  header h1 { font-size: 34px; font-weight: 600; max-width: 640px; }
+  header p { color: #c3d3e3; max-width: 520px; margin-top: 12px; font-size: 15px; }
+  main { max-width: 1100px; margin: 0 auto; padding: 36px 32px 80px; display: grid; grid-template-columns: 320px 1fr; gap: 28px; align-items: start; }
+  @media (max-width: 820px) { main { grid-template-columns: 1fr; } }
+  .panel { background: #fff; border: 1px solid #d8d0bd; }
+  .upload-panel { padding: 24px; position: sticky; top: 24px; }
+  .upload-panel h2 { font-size: 15px; border-bottom: 1px solid #d8d0bd; padding-bottom: 10px; margin-bottom: 16px; }
+  .dropzone { border: 1.5px dashed var(--blueprint); background: #f9fbfd; padding: 28px 16px; text-align: center; cursor: pointer; }
+  .dropzone.drag { background: #eef4f9; }
+  .dropzone p { margin: 0; color: var(--muted); font-size: 13.5px; }
+  .filename { color: var(--ink); font-weight: 500; margin-top: 8px; word-break: break-word; }
+  input[type=file] { display: none; }
+  button.primary { width: 100%; margin-top: 16px; background: var(--blueprint); color: #fff; border: none; padding: 12px; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer; }
+  button.primary:disabled { background: #9db6c9; cursor: not-allowed; }
+  .config { margin-top: 20px; padding-top: 16px; border-top: 1px solid #d8d0bd; }
+  .config label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .config input { width: 100%; padding: 8px; border: 1px solid #d8d0bd; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; }
+  .status { margin-top: 14px; font-size: 13px; }
+  .status.error { color: var(--red); }
+  .status.loading { color: var(--blueprint); }
+  .titleblock { display: grid; grid-template-columns: 1fr auto; padding: 22px 24px; border-bottom: 2px solid var(--ink); }
+  .titleblock h2 { font-size: 22px; }
+  .doc-meta { text-align: right; font-size: 12px; color: var(--muted); }
+  .summary { padding: 20px 24px; border-bottom: 1px solid #d8d0bd; }
+  .section { padding: 20px 24px; border-bottom: 1px solid #d8d0bd; }
+  .section:last-child { border-bottom: none; }
+  .section h3 { font-size: 13px; color: var(--blueprint); margin-bottom: 12px; }
+  table { width: 100%; border-collapse: collapse; }
+  td, th { text-align: left; padding: 8px 10px; font-size: 13.5px; border-bottom: 1px solid #eee; vertical-align: top; }
+  th { font-size: 11px; color: var(--muted); font-weight: 500; border-bottom: 1px solid #d8d0bd; }
+  .tag { display: inline-block; padding: 2px 8px; font-size: 11px; font-family: 'IBM Plex Mono', monospace; }
+  .tag.low { background: var(--green-bg); color: var(--green); }
+  .tag.medium { background: var(--amber-bg); color: var(--amber); }
+  .tag.high { background: var(--red-bg); color: var(--red); }
+  .empty-state { padding: 60px 24px; text-align: center; color: var(--muted); }
+  .empty-state .display { font-size: 18px; margin-bottom: 8px; color: var(--ink); }
+  .placeholder-value { color: #b7bcc2; font-style: italic; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="inner">
+    <div class="kicker mono">SPEC ANALYZER — DOCUMENT REVIEW TOOL</div>
+    <h1>Turn a 40-page spec into a page you can actually use.</h1>
+    <p>Upload an engineering spec, RFP, or contract. Gemini reads it and pulls out the deadlines, requirements, and risks worth flagging before you sign off.</p>
+  </div>
+</header>
+
+<main>
+  <section class="panel upload-panel">
+    <h2>Upload document</h2>
+    <div class="dropzone" id="dropzone">
+      <p>Drag a PDF here, or click to browse</p>
+      <div class="filename" id="filename"></div>
+    </div>
+    <input type="file" id="fileInput" accept="application/pdf" />
+    <button class="primary" id="analyzeBtn" disabled>Analyze document</button>
+    <div class="status" id="status"></div>
+    <div class="config">
+      <label for="apiUrl">Backend API URL</label>
+      <input type="text" id="apiUrl" value="http://localhost:8000" />
+    </div>
+  </section>
+
+  <section class="panel" id="results">
+    <div class="empty-state">
+      <div class="display">No document analyzed yet</div>
+      <p>Upload a PDF on the left to see its extracted deadlines,<br/>requirements, and risks here.</p>
+    </div>
+  </section>
+</main>
+<script>
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const filenameEl = document.getElementById('filename');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  const statusEl = document.getElementById('status');
+  const resultsEl = document.getElementById('results');
+  const apiUrlInput = document.getElementById('apiUrl');
+
+  let selectedFile = null;
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('drag');
+    if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length) setFile(e.target.files[0]);
+  });
+
+  function setFile(file) {
+    if (file.type !== 'application/pdf') {
+      statusEl.textContent = 'Please choose a PDF file.';
+      statusEl.className = 'status error';
+      return;
+    }
+    selectedFile = file;
+    filenameEl.textContent = file.name;
+    analyzeBtn.disabled = false;
+    statusEl.textContent = '';
+    statusEl.className = 'status';
+  }
+
+  analyzeBtn.addEventListener('click', async () => {
+    if (!selectedFile) return;
+    const apiUrl = apiUrlInput.value.trim().replace(/\/$/, '');
+
+    analyzeBtn.disabled = true;
+    statusEl.textContent = 'Reading document and calling the model — this can take 10–20s...';
+    statusEl.className = 'status loading';
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
+    try {
+      const res = await fetch(`${apiUrl}/analyze`, { method: 'POST', body: formData });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.detail || 'Something went wrong analyzing this document.');
+      }
+
+      renderResults(data);
+      statusEl.textContent = 'Done.';
+      statusEl.className = 'status';
+    } catch (err) {
+      statusEl.textContent = err.message;
+      statusEl.className = 'status error';
+    } finally {
+      analyzeBtn.disabled = false;
+    }
+  });
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str ?? '';
+    return div.innerHTML;
+  }
+
+  function renderResults(data) {
+    const deadlines = data.deadlines || [];
+    const requirements = data.requirements || [];
+    const risks = data.risks || [];
+
+    resultsEl.innerHTML = `
+      <div class="titleblock">
+        <h2>${escapeHtml(data.document_title || 'Untitled document')}</h2>
+        <div class="doc-meta mono">ANALYZED&nbsp;${new Date().toLocaleDateString()}</div>
+      </div>
+      <div class="summary">${escapeHtml(data.summary || '')}</div>
+
+      <div class="section">
+        <h3>DEADLINES (${deadlines.length})</h3>
+        ${deadlines.length ? `
+          <table>
+            <tr><th>What</th><th>When</th></tr>
+            ${deadlines.map(d => `<tr><td>${escapeHtml(d.label)}</td><td class="mono">${escapeHtml(d.date_or_timeframe)}</td></tr>`).join('')}
+          </table>` : `<p class="placeholder-value">No deadlines found in this document.</p>`}
+      </div>
+
+      <div class="section">
+        <h3>REQUIREMENTS (${requirements.length})</h3>
+        ${requirements.length ? `
+          <table>
+            <tr><th>Requirement</th><th>Category</th></tr>
+            ${requirements.map(r => `<tr><td>${escapeHtml(r.item)}</td><td class="mono">${escapeHtml(r.category)}</td></tr>`).join('')}
+          </table>` : `<p class="placeholder-value">No specific requirements extracted.</p>`}
+      </div>
+
+      <div class="section">
+        <h3>FLAGGED RISKS (${risks.length})</h3>
+        ${risks.length ? `
+          <table>
+            <tr><th>Risk</th><th>Severity</th><th>Why it matters</th></tr>
+            ${risks.map(r => `<tr><td>${escapeHtml(r.item)}</td><td><span class="tag ${escapeHtml(r.severity)}">${escapeHtml(r.severity)}</span></td><td>${escapeHtml(r.reason)}</td></tr>`).join('')}
+          </table>` : `<p class="placeholder-value">No risks flagged.</p>`}
+      </div>
+    `;
+  }
+</script>
+
+</body>
+</html>

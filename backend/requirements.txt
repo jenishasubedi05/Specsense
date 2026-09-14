@@ -1,0 +1,9 @@
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+python-multipart==0.0.12
+pypdf==5.0.1
+
+# Google's official library for the Gemini AI model (free tier, no card needed)
+google-genai==1.2.0
+
+python-dotenv==1.0.1
