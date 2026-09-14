@@ -16,11 +16,12 @@ with a prompt asking for a structured breakdown → shows you:
 
 ## Tech stack
 
-
-| Backend : Python, FastAPI |
-| AI :  Google Gemini API (`google-genai`) |
-| PDF parsing : `pypdf` |
-| Frontend : Plain HTML/CSS/JavaScript (no framework, no build step) |
+| Layer | Tech |
+|---|---|
+| Backend | Python, FastAPI |
+| AI | Google Gemini API (`google-genai`) |
+| PDF parsing | `pypdf` |
+| Frontend | Plain HTML/CSS/JavaScript (no framework, no build step) |
 
 The backend is written so the AI provider is isolated to one function —
 swapping to a different model/provider later means changing that one
